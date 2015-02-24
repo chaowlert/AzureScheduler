@@ -16,31 +16,37 @@ namespace AzureScheduler
             var context = new SchedulerContext();
             var jobItems = context.JobItems.Query().Execute();
 
-            var now = DateTime.UtcNow;
-            var tasks = jobItems.Where(jobItem => jobItem.LeaseExpire.GetValueOrDefault() <= now)
+            var start = DateTime.UtcNow;
+            var tasks = jobItems.Where(jobItem => canRun(context, jobItem, start))
                                 .TakeWhile(jobItem => context.JobItems.Lease(jobItem, leaseTime))
-                                .Select(jobItem => doJobAsync(context, jobItem, leaseTime));
+                                .Select(jobItem => doJobAsync(context, jobItem, leaseTime, start));
+            
             return Task.WhenAll(tasks);
         }
 
-        static async Task doJobAsync(SchedulerContext context, JobItem jobItem, TimeSpan timeout)
+        static bool canRun(SchedulerContext context, JobItem jobItem, DateTime start)
         {
+            if (jobItem.LeaseExpire.GetValueOrDefault() > start)
+                return false;
             var lastRun = jobItem.LastRun.GetValueOrDefault();
             var cron = CrontabSchedule.TryParse(jobItem.Cron);
             if (cron == null)
             {
                 if (jobItem.LastRunResult != "CRON ERROR")
                     postJob(context, jobItem, -1, "CRON ERROR", 0);
-                return;
+                return false;
             }
 
-            var start = DateTime.UtcNow;
             var nextRun = cron.GetNextOccurrence(lastRun);
             if (nextRun > start)
-                return;
+                return false;
 
             jobItem.NextRun = cron.GetNextOccurrence(start);
+            return true;
+        }
 
+        static async Task doJobAsync(SchedulerContext context, JobItem jobItem, TimeSpan timeout, DateTime start)
+        {
             var client = createHttpClient(timeout);
             var response = await client.GetAsync(jobItem.Url);
             var content = string.Empty;

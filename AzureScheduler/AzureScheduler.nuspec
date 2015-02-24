@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>AzureScheduler</id>
+    <version>0.1.0</version>
+    <title>Azure Scheduler</title>
+    <authors>Chaowlert</authors>
+    <owners>Chaowlert</owners>
+    <projectUrl>https://github.com/chaowlert/AzureScheduler</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>If you don't want to pay for Azure Scheduler Service, this is for create your own scheduler.</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2014</copyright>
+    <tags>azure scheduler</tags>
+  </metadata>
+</package>
