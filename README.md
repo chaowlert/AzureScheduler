@@ -1,7 +1,7 @@
 AzureScheduler
 ==============
 
-If you don't want to pay for Azure Scheduler Service, this is for create your own scheduler.
+This is for creating your own scheduler on Azure.
 
 ####How to set up
 1. This library use [Azure Storage Extensions]( https://github.com/chaowlert/AzureStorageExtensions). So you can add new schedule by insert new job item using `SchedulerContext`. 
