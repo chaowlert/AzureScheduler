@@ -11,15 +11,15 @@ namespace AzureScheduler
 {
     public static class Scheduler
     {
-        public static Task ProcessAsync(TimeSpan leaseTime)
+        public static Task ProcessAsync()
         {
             var context = new SchedulerContext();
             var jobItems = context.JobItems.Query().Execute();
 
             var start = DateTime.UtcNow;
             var tasks = jobItems.Where(jobItem => canRun(context, jobItem, start))
-                                .TakeWhile(jobItem => context.JobItems.Lease(jobItem, leaseTime))
-                                .Select(jobItem => doJobAsync(context, jobItem, leaseTime, start));
+                                .TakeWhile(jobItem => context.JobItems.Lease(jobItem, TimeSpan.FromMinutes(jobItem.LeaseMinutes)))
+                                .Select(jobItem => doJobAsync(context, jobItem, start));
             
             return Task.WhenAll(tasks);
         }
@@ -28,6 +28,9 @@ namespace AzureScheduler
         {
             if (jobItem.LeaseExpire.GetValueOrDefault() > start)
                 return false;
+            if (jobItem.AlwaysRun)
+                return true;
+
             var lastRun = jobItem.LastRun.GetValueOrDefault();
             var cron = CrontabSchedule.TryParse(jobItem.Cron);
             if (cron == null)
@@ -45,15 +48,16 @@ namespace AzureScheduler
             return true;
         }
 
-        static async Task doJobAsync(SchedulerContext context, JobItem jobItem, TimeSpan timeout, DateTime start)
+        static async Task doJobAsync(SchedulerContext context, JobItem jobItem, DateTime start)
         {
-            var client = createHttpClient(timeout);
+            var client = createHttpClient(TimeSpan.FromMinutes(jobItem.LeaseMinutes));
             var response = await client.GetAsync(jobItem.Url);
             var content = string.Empty;
             if (response.Content != null)
                 content = await response.Content.ReadAsStringAsync();
 
-            postJob(context, jobItem, (int)response.StatusCode, content, (int)(DateTime.UtcNow - start).TotalSeconds);
+            if (!jobItem.AlwaysRun)
+                postJob(context, jobItem, (int)response.StatusCode, content, (int)(DateTime.UtcNow - start).TotalSeconds);
         }
 
         static void postJob(SchedulerContext context, JobItem jobItem, int statusCode, string result, int runTime)

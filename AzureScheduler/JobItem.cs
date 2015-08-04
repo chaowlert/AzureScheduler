@@ -17,5 +17,7 @@ namespace AzureScheduler
         public string LastRunResult { get; set; }
         public DateTime? NextRun { get; set; }
         public DateTime? LeaseExpire { get; set; }
+        public int LeaseMinutes { get; set; }
+        public bool AlwaysRun { get; set; }
     }
 }
