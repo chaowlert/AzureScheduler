@@ -11,10 +11,16 @@ namespace AzureScheduler
 {
     public static class Scheduler
     {
-        public static Task ProcessAsync()
+        public static Task ProcessAsync(string jobName = null)
         {
             var context = new SchedulerContext();
-            var jobItems = context.JobItems.Query().Execute();
+            var query = context.JobItems.Query().AsQueryable();
+            if (jobName != null)
+                query = from item in query
+                        where item.PartitionKey == jobName &&
+                              item.RowKey == string.Empty
+                        select item;
+            var jobItems = query.AsEnumerable();
 
             var start = DateTime.UtcNow;
             var tasks = jobItems.Where(jobItem => canRun(context, jobItem, start))
