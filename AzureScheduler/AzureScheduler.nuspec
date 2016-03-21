@@ -8,7 +8,7 @@
     <owners>Chaowlert</owners>
     <projectUrl>https://github.com/chaowlert/AzureScheduler</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>If you don't want to pay for Azure Scheduler Service, this is for create your own scheduler.</description>
+    <description>This is for creating your own scheduler on Azure.</description>
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2014</copyright>
     <tags>azure scheduler</tags>
