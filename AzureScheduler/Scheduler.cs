@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Base64Url;
 using NCrontab;
@@ -56,8 +57,8 @@ namespace AzureScheduler
 
         static async Task doJobAsync(SchedulerContext context, JobItem jobItem, DateTime start)
         {
-            var client = createHttpClient(TimeSpan.FromMinutes(jobItem.LeaseMinutes));
-            var response = await client.GetAsync(jobItem.Url);
+            var cts = new CancellationTokenSource(TimeSpan.FromMinutes(jobItem.LeaseMinutes));
+            var response = await _client.GetAsync(jobItem.Url, cts.Token);
             var content = string.Empty;
             if (response.Content != null)
                 content = await response.Content.ReadAsStringAsync();
@@ -87,7 +88,8 @@ namespace AzureScheduler
             context.JobItems.Replace(jobItem);
         }
 
-        static HttpClient createHttpClient(TimeSpan timeout)
+        private static readonly HttpClient _client = createHttpClient();
+        static HttpClient createHttpClient()
         {
             var handler = new HttpClientHandler
             {
@@ -96,7 +98,7 @@ namespace AzureScheduler
             };
             var client = new HttpClient(handler)
             {
-                Timeout = timeout,
+                Timeout = Timeout.InfiniteTimeSpan,
             };
             client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
             client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
