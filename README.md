@@ -3,7 +3,7 @@ AzureScheduler
 
 This is for creating your own scheduler on Azure.
 
-####How to set up
+#### How to set up
 1. This library use [Azure Storage Extensions]( https://github.com/chaowlert/AzureStorageExtensions). So you can add new schedule by insert new job item using `SchedulerContext`. 
 2. Add job to `JobItems` table.  
 `PartitionKey` is job name.  
@@ -14,7 +14,7 @@ This is for creating your own scheduler on Azure.
 `AlwaysRun` if this is true, scheduler will ignore Cron and run every time we call `Scheduler.ProcessAsync()`, and it will also not produce any log.  
 3. To activate schedule, call `Scheduler.ProcessAsync()`.
 
-####Example
+#### Example
 In `web.config`, add following to connectionStrings
 ```
 <connectionStrings>
