@@ -18,16 +18,15 @@ namespace AzureScheduler
             var query = context.JobItems.Query().AsQueryable();
             if (jobName != null)
                 query = from item in query
-                        where item.PartitionKey == jobName &&
-                              item.RowKey == string.Empty
+                        where item.PartitionKey == string.Empty &&
+                              item.RowKey == jobName
                         select item;
             var jobItems = query.AsEnumerable();
 
             var start = DateTime.UtcNow;
-            var tasks = jobItems.Where(jobItem => canRun(context, jobItem, start))
-                                .TakeWhile(jobItem => context.JobItems.Lease(jobItem, TimeSpan.FromMinutes(jobItem.LeaseMinutes)))
-                                .Select(jobItem => doJobAsync(context, jobItem, start));
-            
+            jobItems = jobItems.Where(jobItem => canRun(context, jobItem, start));
+            jobItems = context.JobItems.BulkLease(jobItems, (item, now) => now.AddMinutes(item.LeaseMinutes));
+            var tasks = jobItems.Select(jobItem => doJobAsync(context, jobItem, start));
             return Task.WhenAll(tasks);
         }
 
